@@ -102,7 +102,7 @@
       <File Name="Documentation/doxygen/BitIoLdd10.txt" FileDate="2015-07-22, 21:14:59" FileAge="1437610499174" FileType="45637" CompNumb="81" />
       <File Name="Generated_Code/TimerIntLdd1.c" FileDate="2015-08-31, 15:51:12" FileAge="1441047072708" FileType="45637" CompNumb="55" />
       <File Name="Generated_Code/TracaoA1.c" FileDate="2015-08-31, 15:51:12" FileAge="1441047072927" FileType="45637" CompNumb="39" />
-      <File Name="Documentation/SmartTrackerRCA4_SIGNALS.txt" FileDate="2015-09-05, 10:34:30" FileAge="1441460070579" FileType="3072" />
+      <File Name="Documentation/SmartTrackerRCA4_SIGNALS.txt" FileDate="2015-09-14, 10:12:29" FileAge="1442236349956" FileType="3072" />
       <File Name="Documentation/doxygen/PwmLdd2.txt" FileDate="2015-07-04, 19:13:43" FileAge="1436048023006" FileType="45637" CompNumb="40" />
       <File Name="Generated_Code/ExtIntLdd1.h" FileDate="2015-08-31, 15:51:13" FileAge="1441047073214" FileType="45637" CompNumb="7" />
       <File Name="Generated_Code/BitIoLdd8.h" FileDate="2015-08-31, 15:51:12" FileAge="1441047072630" FileType="45637" CompNumb="65" />
@@ -158,7 +158,7 @@
       <File Name="Generated_Code/PE_LDD.h" FileDate="2015-08-31, 15:51:12" FileAge="1441047072395" FileType="45637" CompNumb="2" />
       <File Name="Sources/Events.h" FileDate="2015-07-25, 00:43:24" FileAge="1437795804814" FileType="131328" />
       <File Name="Generated_Code/PE_LDD.c" FileDate="2015-08-31, 15:51:12" FileAge="1441047072411" FileType="45637" CompNumb="2" />
-      <File Name="Sources/Events.c" FileDate="2015-08-31, 20:53:29" FileAge="1441065209179" FileType="131328" />
+      <File Name="Sources/Events.c" FileDate="2015-09-14, 09:47:48" FileAge="1442234868838" FileType="131328" />
       <File Name="Generated_Code/Serial1.h" FileDate="2015-08-31, 15:51:12" FileAge="1441047072520" FileType="45637" CompNumb="75" />
       <File Name="Documentation/doxygen/BitIoLdd3.txt" FileDate="2015-06-30, 01:11:06" FileAge="1435637466533" FileType="45637" CompNumb="33" />
       <File Name="Generated_Code/Serial1.c" FileDate="2015-08-31, 15:51:12" FileAge="1441047072520" FileType="45637" CompNumb="75" />
@@ -169,5 +169,5 @@
       <File Name="Generated_Code/TU3.h" FileDate="2015-08-31, 15:51:12" FileAge="1441047072739" FileType="45637" CompNumb="56" />
     </GeneratedByPE>
   </GeneratedFilesList>
-  <CodeGenReference>10</CodeGenReference>
+  <CodeGenReference>12</CodeGenReference>
 </CodeGenerationInfo>

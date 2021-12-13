@@ -25,16 +25,16 @@
 /*** Mudar apartir daqui ***/
 
 //Algoritmo de Limiarização
-#define DELTAAMOSTRA_MIN 40
-#define DELTA_AMOSTRA_MIN 47
-#define LIMIAR_PADRAO 85
+#define DELTAAMOSTRA_MIN 120
+#define DELTA_AMOSTRA_MIN 127
+#define LIMIAR_PADRAO 130
 
 //linhas de processamento
-#define LINENOW 0
+#define LINENOW 4
 #define LINEBOOST 26
 
 //Algoritmo de Deteccao de Bordas
-#define WIDTH_TRACK 64//64
+#define WIDTH_TRACK 60//64
 #define WIDTH_TRACK_RANGE 10
 
 //Sistema de Controle

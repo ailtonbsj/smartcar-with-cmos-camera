@@ -219,8 +219,8 @@ int main(void)
 			}
 			deltaAmostra = maiorAmostra - menorAmostra;
 			
-			if(deltaAmostra > DELTAAMOSTRA_MIN) limiar = ((float) deltaAmostra / 2) + menorAmostra + 3;
-			else limiar = LIMIAR_PADRAO;
+			limiar = ((float) deltaAmostra / 2) + menorAmostra + 13;
+			if(limiar < LIMIAR_PADRAO) limiar = LIMIAR_PADRAO;
 			
 			for (auX = MINCAM; auX < MAXCAM; auX++) {
 				frameLine[thrY][auX - MINCAM] = frameBuffer1[thrY][auX] > limiar;
@@ -356,6 +356,7 @@ int main(void)
 					else {
 						if(isFreio){
 							contaFreio++;
+							//this is a test!
 							if(contaFreio > CICLOS_FREIO) isFreio = FALSE; //Controla o tempo do Freio
 						}
 						else {
