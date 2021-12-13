@@ -72,6 +72,8 @@
 #include "WDog1.h"
 #include "Serial1.h"
 #include "ASerialLdd1.h"
+#include "Botao1.h"
+#include "BitIoLdd10.h"
 /* Including shared modules, which are used for whole project */
 #include "PE_Types.h"
 #include "PE_Error.h"
@@ -93,24 +95,30 @@ char indiceY;
 //Processing Cam
 unsigned char maiorAmostra = 0;
 unsigned char menorAmostra = 255;
+unsigned char auX;
 unsigned char deltaAmostra = 0;
-unsigned char auX, auY;
 unsigned char limiar;
-signed char auX_s, auY_s, bordaL, bordaR, ladoL, ladoR;
-signed char diffBorda = 0;
-unsigned char widthTrack = WIDTH_TRACK;
-unsigned char quantLinhas = 2;
-unsigned char quantLinhasPrevious = 2;
-unsigned char ladoReal;
-signed char output = 0;
-signed char err = 0, errAbs = 0;
-int servo, motor1, motor2;
+//signed char auX_s, auY_s, bordaL, bordaR, ladoL, ladoR;
+//signed char diffBorda = 0;
+//unsigned char widthTrack = WIDTH_TRACK;
+//unsigned char quantLinhas = 2;
+//unsigned char quantLinhasPrevious = 2;
+//unsigned char ladoReal;
+//signed char output = 0;
+//signed char err = 0, errAbs = 0;
+//int servo, motor1, motor2;
 //char contTrack = 0;
 //signed char previousErr = 0, previousErrAbs = 0;
 //float Kp = 1.0;
 
 //debug
-long contaQuadros = 0;
+//long contaQuadros = 0;
+
+void wait(long a) {
+	while (a > 0) {
+		a--;
+	}
+}
 
 void setServo(int16 giro) {
 	if (giro < ESQUERDA_SERVO) {
@@ -120,12 +128,6 @@ void setServo(int16 giro) {
 		giro = DIREITO_SERVO;
 	}
 	Servo_SetDutyUS(giro);
-}
-
-void wait(long a) {
-	while (a > 0) {
-		a--;
-	}
 }
 
 int acenderLeds(uint8 num) {
@@ -216,33 +218,32 @@ int main(void)
 				if (menorAmostra > frameBuffer1[LINENOW][auX]) menorAmostra = frameBuffer1[LINENOW][auX];
 			}
 			deltaAmostra = maiorAmostra - menorAmostra;
-			limiar = ((float) deltaAmostra / 2) + menorAmostra + 5;
-			
+			limiar = ((float) deltaAmostra / 2) + menorAmostra + 3;
 			for (auX = MINCAM; auX < MAXCAM; auX++) {
 				frameLine[auX - MINCAM] = frameBuffer1[LINENOW][auX] > limiar;
 			}
-			
-			bordaL = -1;
-			bordaR = -1;
-			if(deltaAmostra > DELTA_AMOSTRA_MIN){
-				for (auX_s = CENTCAML; auX_s > 0; auX_s--) {
-					if (frameLine[auX_s] != frameLine[auX_s-1]) {
-						bordaL = auX_s;
-						break;
-					}
-				}
-				for (auY_s = CENTCAML; auY_s < (WIDTH_REAL-1); auY_s++) {
-					if (frameLine[auY_s] != frameLine[auY_s+1]) {
-						bordaR = auY_s;
-						break;
-					}
-				}
-			}
-			
-			diffBorda = 0;
-			if(bordaL != -1 && bordaR != -1) diffBorda = bordaR - bordaL;
-			if(diffBorda && (diffBorda < WIDTH_TRACK/2)) bordaR = -1;
-			
+//			
+//			bordaL = -1;
+//			bordaR = -1;
+//			if(deltaAmostra > DELTA_AMOSTRA_MIN){
+//				for (auX_s = CENTCAML; auX_s > 0; auX_s--) {
+//					if (frameLine[auX_s] != frameLine[auX_s-1]) {
+//						bordaL = auX_s;
+//						break;
+//					}
+//				}
+//				for (auY_s = CENTCAML; auY_s < (WIDTH_REAL-1); auY_s++) {
+//					if (frameLine[auY_s] != frameLine[auY_s+1]) {
+//						bordaR = auY_s;
+//						break;
+//					}
+//				}
+//			}
+//			
+//			diffBorda = 0;
+//			if(bordaL != -1 && bordaR != -1) diffBorda = bordaR - bordaL;
+//			if(diffBorda && (diffBorda < WIDTH_TRACK/2)) bordaR = -1;
+//			
 //			for (auX_s = CENTCAML; auX_s >= 0; auX_s--) {
 //				if (!frameLine[auX_s]) {
 //					bordaL = auX_s;
@@ -256,21 +257,21 @@ int main(void)
 //					break;
 //				}
 //			}
-			
-			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     BEGIN
-			char leds = abs((CENTCAML - auX_s) - (auY_s - CENTCAMR));
-			if (leds == 0) acenderLeds(0b1111);
-			else if (leds == 1) acenderLeds(0b1110);
-			else if (leds == 2)	acenderLeds(0b1100);
-			else if (leds == 3) acenderLeds(0b1000);
-			else acenderLeds(0);
-			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     END
-			
+//			
+//			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     BEGIN
+//			char leds = abs((CENTCAML - auX_s) - (auY_s - CENTCAMR));
+//			if (leds == 0) acenderLeds(0b1111);
+//			else if (leds == 1) acenderLeds(0b1110);
+//			else if (leds == 2)	acenderLeds(0b1100);
+//			else if (leds == 3) acenderLeds(0b1000);
+//			else acenderLeds(0);
+//			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     END
+//			
 //			//FOR DEBUG - HAS TWO LINES BEGIN
 //			if(bordaL == 0 || bordaR == WIDTH_REAL) acenderLeds(0b0000);
 //			else acenderLeds(0b1111);
 //			//FOR DEBUG - HAS TWO LINES END
-			
+//			
 //			//Find distance between two border auto
 //			if (contTrack < 15) {
 //				contTrack++;
@@ -278,7 +279,7 @@ int main(void)
 //					widthTrack = diffBorda;
 //				}
 //			}
-
+//
 //			if (bordaL == 0) {
 //				ladoL = bordaR - widthTrack;
 //				ladoR = bordaR;
@@ -289,58 +290,58 @@ int main(void)
 //				ladoR = bordaR;
 //				ladoL = bordaL;
 //			}
-			
-			#define LADO_L 1
-			#define LADO_R 0
-			
-			if(deltaAmostra > DELTA_AMOSTRA_MIN){
-				if((bordaL != -1) && (bordaR != -1)){ //&& (diffBorda > 40)
-					quantLinhas = 2;
-				}
-				else if((bordaL != -1) || (bordaR != -1)) quantLinhas = 1;
-			} else quantLinhas = 0;
-			
-			if((quantLinhasPrevious == 2) && (quantLinhas == 1)){
-				if(bordaL != -1) ladoReal = LADO_L;
-				else ladoReal = LADO_R;
-			}
-			if(quantLinhas == 1){
-				if(ladoReal){ //LADO L
-					if(bordaL != -1) ladoL = bordaL;
-					else ladoL = bordaR;
-					ladoR = ladoL + widthTrack;
-				}
-				else { //LADO R
-					if(bordaL != -1) ladoR = bordaL;
-					else ladoR = bordaR;
-					ladoL = ladoR - widthTrack;
-				}
-			}
-			else if(quantLinhas == 2){
-				ladoL = bordaL;
-				ladoR = bordaR;
-			}
-			quantLinhasPrevious = quantLinhas;
-		
-			output = (ladoR + ladoL) / 2;
-			err = CENTCAML - output;
-			
-			Serial1_SendChar(err+128);
-			
-			err = ((float) KP*err);
-			//errAbs = abs(err);
-			
-			
-			
-			
-			servo = ESQUERDA_SERVO	+ (DIREITO_SERVO - ESQUERDA_SERVO)*((float)(err - MIN_ERRO)/RANGE_ERRO);
-			setServo(servo);
-			
-			motor1 = REG_TRACAO;
-			motor2 = REG_TRACAO;
-			setTracao(motor1, motor2);
-			
-			//Serial1_SendChar(err+128);
+//			
+//			#define LADO_L 1
+//			#define LADO_R 0
+//			
+//			if(deltaAmostra > DELTA_AMOSTRA_MIN){
+//				if((bordaL != -1) && (bordaR != -1)){ //&& (diffBorda > 40)
+//					quantLinhas = 2;
+//				}
+//				else if((bordaL != -1) || (bordaR != -1)) quantLinhas = 1;
+//			} else quantLinhas = 0;
+//			
+//			if((quantLinhasPrevious == 2) && (quantLinhas == 1)){
+//				if(bordaL != -1) ladoReal = LADO_L;
+//				else ladoReal = LADO_R;
+//			}
+//			if(quantLinhas == 1){
+//				if(ladoReal){ //LADO L
+//					if(bordaL != -1) ladoL = bordaL;
+//					else ladoL = bordaR;
+//					ladoR = ladoL + widthTrack;
+//				}
+//				else { //LADO R
+//					if(bordaL != -1) ladoR = bordaL;
+//					else ladoR = bordaR;
+//					ladoL = ladoR - widthTrack;
+//				}
+//			}
+//			else if(quantLinhas == 2){
+//				ladoL = bordaL;
+//				ladoR = bordaR;
+//			}
+//			quantLinhasPrevious = quantLinhas;
+//		
+//			output = (ladoR + ladoL) / 2;
+//			err = CENTCAML - output;
+//			
+//			Serial1_SendChar(err+128);
+//			
+//			err = ((float) KP*err);
+//			//errAbs = abs(err);
+//			
+//			
+//			
+//			
+//			servo = ESQUERDA_SERVO	+ (DIREITO_SERVO - ESQUERDA_SERVO)*((float)(err - MIN_ERRO)/RANGE_ERRO);
+//			setServo(servo);
+//			
+//			motor1 = REG_TRACAO;
+//			motor2 = REG_TRACAO;
+//			setTracao(motor1, motor2);
+//			
+//			//Serial1_SendChar(err+128);
 //	
 //			if (previousErrAbs > TRAVA_ATIVO) { //Trava o carro para caso perder pista, voltar
 //				//if (diffBorda > MIN_DESTRAVA && diffBorda < MAX_DESTRAVA && ((previousErr > 0 && err > 0) || (previousErr < 0 && err < 0))) {

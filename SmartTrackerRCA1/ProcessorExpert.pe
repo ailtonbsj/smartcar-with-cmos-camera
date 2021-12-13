@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PEproject>
   <Header>
-    <Name>SmartTrackerRCA1</Name>
+    <Name>SmartTrackerRCA2</Name>
     <SavedBy>Windows</SavedBy>
     <ModificationStamp>24</ModificationStamp>
-    <Date>2015-07-22</Date>
+    <Date>2015-07-23</Date>
     <IDE>Eclipse IDE</IDE>
     <PEversion>1.9.0.RT6_b1411-0406</PEversion>
   </Header>
@@ -6930,7 +6930,7 @@
         <ReadOnly>false</ReadOnly>
         <UserReadOnly>false</UserReadOnly>
         <PropertyModelIsAutomatic>false</PropertyModelIsAutomatic>
-        <Value>0</Value>
+        <Value>1</Value>
         <Base>DEC</Base>
       </ItemState>
       <ItemState>
