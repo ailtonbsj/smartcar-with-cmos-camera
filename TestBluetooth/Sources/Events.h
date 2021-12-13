@@ -1,11 +1,11 @@
 /* ###################################################################
 **     Filename    : Events.h
-**     Project     : TestBluetooth
+**     Project     : BluetoothTest
 **     Processor   : MKL25Z128VLK4
 **     Component   : Events
 **     Version     : Driver 01.00
 **     Compiler    : GNU C Compiler
-**     Date/Time   : 2015-07-15, 00:38, # CodeGen: 0
+**     Date/Time   : 2015-07-15, 01:14, # CodeGen: 0
 **     Abstract    :
 **         This is user's event module.
 **         Put your event handler code here.
@@ -34,6 +34,9 @@
 #include "PE_Error.h"
 #include "PE_Const.h"
 #include "IO_Map.h"
+#include "TU2.h"
+#include "TracaoEnable.h"
+#include "BitIoLdd1.h"
 #include "TracaoA1.h"
 #include "PwmLdd1.h"
 #include "TracaoA2.h"
@@ -42,13 +45,8 @@
 #include "PwmLdd3.h"
 #include "TracaoB2.h"
 #include "PwmLdd4.h"
-#include "TU1.h"
-#include "TU2.h"
-#include "TU3.h"
 #include "Serial1.h"
 #include "ASerialLdd1.h"
-#include "TracaoEnable.h"
-#include "BitIoLdd1.h"
 
 #ifdef __cplusplus
 extern "C" {

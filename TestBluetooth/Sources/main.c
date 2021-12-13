@@ -1,10 +1,10 @@
 /* ###################################################################
 **     Filename    : main.c
-**     Project     : TestBluetooth
+**     Project     : BluetoothTest
 **     Processor   : MKL25Z128VLK4
 **     Version     : Driver 01.01
 **     Compiler    : GNU C Compiler
-**     Date/Time   : 2015-07-15, 00:38, # CodeGen: 0
+**     Date/Time   : 2015-07-15, 01:14, # CodeGen: 0
 **     Abstract    :
 **         Main module.
 **         This module contains user's application code.
@@ -30,6 +30,9 @@
 /* Including needed modules to compile this module/procedure */
 #include "Cpu.h"
 #include "Events.h"
+#include "TU2.h"
+#include "TracaoEnable.h"
+#include "BitIoLdd1.h"
 #include "TracaoA1.h"
 #include "PwmLdd1.h"
 #include "TracaoA2.h"
@@ -38,13 +41,8 @@
 #include "PwmLdd3.h"
 #include "TracaoB2.h"
 #include "PwmLdd4.h"
-#include "TU1.h"
-#include "TU2.h"
-#include "TU3.h"
 #include "Serial1.h"
 #include "ASerialLdd1.h"
-#include "TracaoEnable.h"
-#include "BitIoLdd1.h"
 /* Including shared modules, which are used for whole project */
 #include "PE_Types.h"
 #include "PE_Error.h"
@@ -52,7 +50,6 @@
 #include "IO_Map.h"
 
 /* User includes (#include below this line is not maintained by Processor Expert) */
-
 void wait(long a) {
 	while (a > 0) {
 		a--;
@@ -71,16 +68,19 @@ int main(void)
 
   /* Write your code here */
   /* For example: for(;;) { } */
-  TracaoEnable_PutVal(TRUE);
+  TracaoEnable_PutVal(FALSE);
   TracaoA2_SetDutyUS(999);
   TracaoB2_SetDutyUS(999);
   TracaoA1_SetDutyUS(999);
   TracaoB1_SetDutyUS(999);
-  char ola = 0;
+#define VALOR 1000000
   for(;;){
-	  //Serial1_SendChar(ola);
-	  ola++;
-	  wait(10000);
+	  Serial1_SendChar(-10);
+	  wait(VALOR);
+	  Serial1_SendChar(7);
+	  wait(VALOR);
+	  Serial1_SendChar(0);
+	  wait(VALOR);
   }
 
   /*** Don't write any code pass this line, or it will be deleted during code generation. ***/
