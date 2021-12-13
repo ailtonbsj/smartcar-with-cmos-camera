@@ -42,6 +42,14 @@ extern uint8_t frameBuffer1[HEIGHT][WIDTH];
 extern char frameFlag;
 extern char saltoEmY;
 extern char indiceY;
+extern unsigned char ativaParada;
+extern unsigned int RETA_MAX;
+extern unsigned int RETA_MIN;
+extern unsigned int CURVA_MAX;
+extern unsigned int CURVA_MIN;
+extern unsigned int FREIO_MAX;
+extern unsigned int FREIO_MIN;
+int contMeioSeg = 0;
 /*
 ** ===================================================================
 **     Event       :  Cpu_OnNMIINT (module Events)
@@ -129,19 +137,19 @@ void CamHSync_OnInterrupt(void)
 void Relogio1_OnInterrupt(void)
 {
   /* Write your code here ... */
-//  //DEBUG DE SERVO MOTOR!!!
-//	static int cont;
-//	cont++;
-//	static int opcao;
-//	if(cont >= 4){
-//		cont = 0;
-//		if(opcao == 0)      setServo(CENTRO_SERVO);
-//		else if(opcao == 1) setServo(ESQUERDA_SERVO);
-//		else if(opcao == 2) setServo(CENTRO_SERVO);
-//		else if(opcao == 3) setServo(DIREITO_SERVO);
-//		opcao++;
-//		if(opcao > 3) opcao = 0;
-//	}
+	contMeioSeg++;
+	if(contMeioSeg == 2){
+		RETA_MAX = 1;
+		RETA_MIN = 800;
+		CURVA_MAX = 350;
+		CURVA_MIN = 900;
+		FREIO_MAX = 800;
+		FREIO_MIN = 999;
+	}
+	else if(contMeioSeg == 28){
+		ativaParada = TRUE; //28 equals to 14 secs
+		Relogio1_Disable();
+	}
 }
 
 /* END Events */
