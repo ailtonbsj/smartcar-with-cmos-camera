@@ -36,10 +36,6 @@ type
     Series3: TLineSeries;
     Maximo: TLabel;
     Minimo: TLabel;
-    Label1: TLabel;
-    Edit1: TEdit;
-    CheckBox1: TCheckBox;
-    Label2: TLabel;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure ComPort1RxChar(Sender: TObject; Count: Integer);
@@ -101,10 +97,7 @@ begin
 
   if not ComPort1.Connected then
     begin
-    if CheckBox1.Checked then
-      ComPort1.Port := Edit1.Text;
     ComPort1.Open();
-    Label2.Caption := 'Usando: ' + ComPort1.Port;
     ComPort1.ClearBuffer(True,True)
     end
   else

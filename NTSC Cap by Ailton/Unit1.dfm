@@ -26,20 +26,6 @@ object Form1: TForm1
     Width = 105
     Height = 105
   end
-  object Label1: TLabel
-    Left = 8
-    Top = 168
-    Width = 25
-    Height = 13
-    Caption = 'Porta'
-  end
-  object Label2: TLabel
-    Left = 8
-    Top = 544
-    Width = 40
-    Height = 13
-    Caption = 'Usando:'
-  end
   object Button1: TButton
     Left = 8
     Top = 72
@@ -269,22 +255,6 @@ object Form1: TForm1
         OnClick = Button5Click
       end
     end
-  end
-  object Edit1: TEdit
-    Left = 8
-    Top = 184
-    Width = 97
-    Height = 21
-    TabOrder = 4
-    Text = 'COM10'
-  end
-  object CheckBox1: TCheckBox
-    Left = 8
-    Top = 216
-    Width = 97
-    Height = 17
-    Caption = 'Usar essa porta'
-    TabOrder = 5
   end
   object ComPort1: TComPort
     BaudRate = br9600
