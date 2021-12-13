@@ -69,6 +69,9 @@
 #include "BitIoLdd8.h"
 #include "SW4.h"
 #include "BitIoLdd9.h"
+#include "WDog1.h"
+#include "Serial1.h"
+#include "ASerialLdd1.h"
 /* Including shared modules, which are used for whole project */
 #include "PE_Types.h"
 #include "PE_Error.h"
@@ -88,19 +91,23 @@ char saltoEmY;
 char indiceY;
 
 //Processing Cam
-char maiorAmostra = 0;
-char menorAmostra = 255;
-signed char auX, auY;
-char limiar;
-signed char bordaL, bordaR, ladoL, ladoR;
-char contTrack = 0;
-char widthTrack = WIDTH_TRACK;
-char diffBorda;
+unsigned char maiorAmostra = 0;
+unsigned char menorAmostra = 255;
+unsigned char deltaAmostra = 0;
+unsigned char auX, auY;
+unsigned char limiar;
+signed char auX_s, auY_s, bordaL, bordaR, ladoL, ladoR;
+signed char diffBorda = 0;
+unsigned char widthTrack = WIDTH_TRACK;
+unsigned char quantLinhas = 2;
+unsigned char quantLinhasPrevious = 2;
+unsigned char ladoReal;
 signed char output = 0;
 signed char err = 0, errAbs = 0;
-signed char previousErr = 0, previousErrAbs = 0;
 int servo, motor1, motor2;
-float Kp = 1.0;
+//char contTrack = 0;
+//signed char previousErr = 0, previousErrAbs = 0;
+//float Kp = 1.0;
 
 //debug
 long contaQuadros = 0;
@@ -193,89 +200,161 @@ int main(void)
 	TracaoA1_SetDutyUS(999);
 	TracaoB1_SetDutyUS(999);
 	
-	Kp = 0.5 + 2.5*((float) captaValueSwitch()/15);
+	//Kp = 0.5 + 2.5*((float) captaValueSwitch()/15);
+	
+	while(!Botao1_GetVal()){
+	}
+	(void)WDog1_Init(NULL);
+	
 	for (;;) {
-		
 		//Linha 6 capturada!
-		if(indiceY > LINENOW && indiceY < 8){
-			contaQuadros++;
-			//Processar inha!
+		if(indiceY > LINENOW && indiceY < LINENOW+2){
 			maiorAmostra = 0;
 			menorAmostra = 255;
-			for (auX = MINCAM; auX <= MAXCAM; auX++) {
+			for (auX = MINCAM; auX < MAXCAM; auX++) {
 				if (maiorAmostra < frameBuffer1[LINENOW][auX]) maiorAmostra = frameBuffer1[LINENOW][auX];
 				if (menorAmostra > frameBuffer1[LINENOW][auX]) menorAmostra = frameBuffer1[LINENOW][auX];
 			}
-			limiar = ((float) (maiorAmostra - menorAmostra) / 2) + menorAmostra;
-	
-			for (auX = MINCAM; auX <= MAXCAM; auX++) {
+			deltaAmostra = maiorAmostra - menorAmostra;
+			limiar = ((float) deltaAmostra / 2) + menorAmostra + 5;
+			
+			for (auX = MINCAM; auX < MAXCAM; auX++) {
 				frameLine[auX - MINCAM] = frameBuffer1[LINENOW][auX] > limiar;
 			}
-	
-			bordaL = 0;
-			for (auX = CENTCAML; auX >= 0; auX--) {
-				if (!frameLine[auX]) {
-					bordaL = auX;
-					break;
+			
+			bordaL = -1;
+			bordaR = -1;
+			if(deltaAmostra > DELTA_AMOSTRA_MIN){
+				for (auX_s = CENTCAML; auX_s > 0; auX_s--) {
+					if (frameLine[auX_s] != frameLine[auX_s-1]) {
+						bordaL = auX_s;
+						break;
+					}
 				}
-			}
-			bordaR = WIDTH_REAL;
-			for (auY = CENTCAMR; auY < WIDTH_REAL; auY++) {
-				if (!frameLine[auY]) {
-					bordaR = auY;
-					break;
+				for (auY_s = CENTCAML; auY_s < (WIDTH_REAL-1); auY_s++) {
+					if (frameLine[auY_s] != frameLine[auY_s+1]) {
+						bordaR = auY_s;
+						break;
+					}
 				}
 			}
 			
-//			if(bordaL == 0 && bordaR == WIDTH_REAL) acenderLeds(0b1111);
-//			else acenderLeds(0b0000);
-	
-			//FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     BEGIN
-			char leds = abs((CENTCAML - auX) - (auY - CENTCAMR));
+			diffBorda = 0;
+			if(bordaL != -1 && bordaR != -1) diffBorda = bordaR - bordaL;
+			if(diffBorda && (diffBorda < WIDTH_TRACK/2)) bordaR = -1;
+			
+//			for (auX_s = CENTCAML; auX_s >= 0; auX_s--) {
+//				if (!frameLine[auX_s]) {
+//					bordaL = auX_s;
+//					break;
+//				}
+//			}
+//			
+//			for (auY_s = CENTCAMR; auY_s < WIDTH_REAL; auY_s++) {
+//				if (!frameLine[auY_s]) {
+//					bordaR = auY_s;
+//					break;
+//				}
+//			}
+			
+			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     BEGIN
+			char leds = abs((CENTCAML - auX_s) - (auY_s - CENTCAMR));
 			if (leds == 0) acenderLeds(0b1111);
 			else if (leds == 1) acenderLeds(0b1110);
 			else if (leds == 2)	acenderLeds(0b1100);
 			else if (leds == 3) acenderLeds(0b1000);
 			else acenderLeds(0);
-			//FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     END
-	
-			diffBorda = bordaR - bordaL;
+			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     END
 			
-			// Find distance between two border auto
-			if (contTrack < 15) {
-				contTrack++;
-				if (contTrack == 15) {
-					//widthTrack = diffBorda;
+//			//FOR DEBUG - HAS TWO LINES BEGIN
+//			if(bordaL == 0 || bordaR == WIDTH_REAL) acenderLeds(0b0000);
+//			else acenderLeds(0b1111);
+//			//FOR DEBUG - HAS TWO LINES END
+			
+//			//Find distance between two border auto
+//			if (contTrack < 15) {
+//				contTrack++;
+//				if (contTrack == 15) {
+//					widthTrack = diffBorda;
+//				}
+//			}
+
+//			if (bordaL == 0) {
+//				ladoL = bordaR - widthTrack;
+//				ladoR = bordaR;
+//			} else if (bordaR == WIDTH_REAL) {
+//				ladoL = bordaL;
+//				ladoR = bordaL + widthTrack;
+//			} else {
+//				ladoR = bordaR;
+//				ladoL = bordaL;
+//			}
+			
+			#define LADO_L 1
+			#define LADO_R 0
+			
+			if(deltaAmostra > DELTA_AMOSTRA_MIN){
+				if((bordaL != -1) && (bordaR != -1)){ //&& (diffBorda > 40)
+					quantLinhas = 2;
+				}
+				else if((bordaL != -1) || (bordaR != -1)) quantLinhas = 1;
+			} else quantLinhas = 0;
+			
+			if((quantLinhasPrevious == 2) && (quantLinhas == 1)){
+				if(bordaL != -1) ladoReal = LADO_L;
+				else ladoReal = LADO_R;
+			}
+			if(quantLinhas == 1){
+				if(ladoReal){ //LADO L
+					if(bordaL != -1) ladoL = bordaL;
+					else ladoL = bordaR;
+					ladoR = ladoL + widthTrack;
+				}
+				else { //LADO R
+					if(bordaL != -1) ladoR = bordaL;
+					else ladoR = bordaR;
+					ladoL = ladoR - widthTrack;
 				}
 			}
-	
-			if (bordaL == 0) {
-				ladoL = bordaR - widthTrack;
-				ladoR = bordaR;
-			} else if (bordaR == WIDTH_REAL) {
+			else if(quantLinhas == 2){
 				ladoL = bordaL;
-				ladoR = bordaL + widthTrack;
-			} else {
 				ladoR = bordaR;
-				ladoL = bordaL;
 			}
-	
+			quantLinhasPrevious = quantLinhas;
+		
 			output = (ladoR + ladoL) / 2;
 			err = CENTCAML - output;
-			err = ((float) Kp*err);
-			errAbs = abs(err);
-	
-			if (previousErrAbs > TRAVA_ATIVO) { //Trava o carro para caso perder pista, voltar
-				if (diffBorda > MIN_DESTRAVA && diffBorda < MAX_DESTRAVA && ((previousErr > 0 && err > 0) || (previousErr < 0 && err < 0))) {
-				} else {
-					err = previousErr;
-					errAbs = previousErrAbs;
-				}
-			}
+			
+			Serial1_SendChar(err+128);
+			
+			err = ((float) KP*err);
+			//errAbs = abs(err);
+			
+			
+			
+			
 			servo = ESQUERDA_SERVO	+ (DIREITO_SERVO - ESQUERDA_SERVO)*((float)(err - MIN_ERRO)/RANGE_ERRO);
 			setServo(servo);
-			//setServo(CENTRO_SERVO);
-	
+			
+			motor1 = REG_TRACAO;
+			motor2 = REG_TRACAO;
+			setTracao(motor1, motor2);
+			
+			//Serial1_SendChar(err+128);
+//	
+//			if (previousErrAbs > TRAVA_ATIVO) { //Trava o carro para caso perder pista, voltar
+//				//if (diffBorda > MIN_DESTRAVA && diffBorda < MAX_DESTRAVA && ((previousErr > 0 && err > 0) || (previousErr < 0 && err < 0))) {
+//				if ((diffBorda > MIN_DESTRAVA) && (diffBorda < MAX_DESTRAVA)) {
+//					
+//				} else {
+//					err = previousErr;
+//					errAbs = previousErrAbs;
+//				}
+//			}
+//			servo = ESQUERDA_SERVO	+ (DIREITO_SERVO - ESQUERDA_SERVO)*((float)(err - MIN_ERRO)/RANGE_ERRO);
+//			setServo(servo);
+//			setServo(CENTRO_SERVO);
+//	
 //			if (diffBorda > 75 && previousErrAbs < 19) {
 //				err = previousErr;
 //				errAbs = previousErrAbs;
@@ -284,32 +363,36 @@ int main(void)
 //				servo = ESQUERDA_SERVO	+ (DIREITO_SERVO - ESQUERDA_SERVO)*((float)(err - MIN_ERRO)/RANGE_ERRO);
 //				setServo(servo);
 //			}
-			
-			if(errAbs > DIFERENCIAL_ATIVO){
-//				int y1 = REG_TRACAO + (MIN_TRACAO - REG_TRACAO)*((float)(errAbs - 15)/(30-15));
-//				int y2 = REG_TRACAO + (MAX_TRACAO - REG_TRACAO)*((float)(errAbs - 15)/(30-15));
-				int y1 = MAX_TRACAO + (MIN_TRACAO - MAX_TRACAO)*((float)(errAbs - DIFERENCIAL_ATIVO)/(MIN_ERRO-DIFERENCIAL_ATIVO));
-				int y2 = MIN_TRACAO + (MAX_TRACAO - MIN_TRACAO)*((float)(errAbs - DIFERENCIAL_ATIVO)/(MIN_ERRO-DIFERENCIAL_ATIVO));
-				//int y1 = MAX_TRACAO;
-				//int y2 = MIN_TRACAO;
-				if(err > 0) motor1 = y2, motor2 = y1;
-				else motor1 = y1, motor2 = y2;
-			}
-			else {
-				motor1 = REG_TRACAO;
-				motor2 = REG_TRACAO;
-			}
-			setTracao(motor1, motor2);
-			//setTracao(motor1, motor2);
-			
-			previousErr = err;
-			previousErrAbs = errAbs;
+//			
+//			if(errAbs > DIFERENCIAL_ATIVO){
+////				int y1 = REG_TRACAO + (MIN_TRACAO - REG_TRACAO)*((float)(errAbs - 15)/(30-15));
+////				int y2 = REG_TRACAO + (MAX_TRACAO - REG_TRACAO)*((float)(errAbs - 15)/(30-15));
+//				int y1 = MAX_TRACAO + (MIN_TRACAO - MAX_TRACAO)*((float)(errAbs - DIFERENCIAL_ATIVO)/(MIN_ERRO-DIFERENCIAL_ATIVO));
+//				int y2 = MIN_TRACAO + (MAX_TRACAO - MIN_TRACAO)*((float)(errAbs - DIFERENCIAL_ATIVO)/(MIN_ERRO-DIFERENCIAL_ATIVO));
+//				//int y1 = MAX_TRACAO;
+//				//int y2 = MIN_TRACAO;
+//				if(err > 0) motor1 = y2, motor2 = y1;
+//				else motor1 = y1, motor2 = y2;
+//			}
+//			else {
+//				motor1 = REG_TRACAO;
+//				motor2 = REG_TRACAO;
+//			}
+//			setTracao(motor1, motor2);
+//			//setTracao(motor1, motor2);
+//			
+//			Serial1_SendChar(err + 100);
+//			
+//			previousErr = err;
+//			previousErrAbs = errAbs;
 		}
 		
 		//Novo Quadro Capturado!
 		if (frameFlag) {
 			frameFlag = FALSE;
 			indiceY = 0;
+			(void)WDog1_Clear(NULL);
+			//Serial1_SendChar('\n');
 			CamVSync_Enable();
 		}
 	}
