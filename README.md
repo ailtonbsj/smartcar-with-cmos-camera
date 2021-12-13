@@ -17,9 +17,9 @@ Source code using OV5116 CMOS monochrome camera from Freescale Cup Brazil 2015.
 ### Screenshots
 
 Version 3
-![](.github/v3.png)
+![](.github/v31.gif)
 
-![](.github/v31.png)
+![](.github/v32.gif)
 
 Version 1
 ![](.github/v1.png)
