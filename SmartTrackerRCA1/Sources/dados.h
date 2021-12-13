@@ -4,13 +4,13 @@
 #define HEIGHT 60
 #define MINCAM 12
 #define MAXCAM 82
-//#define CENTCAML 35
-//#define CENTCAMR 36
-//#define WIDTH_REAL (MAXCAM-MINCAM)
+#define CENTCAML 35
+#define CENTCAMR 36
+#define WIDTH_REAL (MAXCAM-MINCAM)
 
 //Servo
-#define CENTRO_SERVO 18400 //18518
-#define LIBERDADE_SERVO 220
+#define CENTRO_SERVO 18518 //FUTABA 18518                 TOWERPRO 18400
+#define LIBERDADE_SERVO 320  // FUTABA 320                TOWERPRO 220
 #define ESQUERDA_SERVO (CENTRO_SERVO-LIBERDADE_SERVO)
 #define DIREITO_SERVO (CENTRO_SERVO+LIBERDADE_SERVO)
 
@@ -19,7 +19,7 @@
 #define MIN_PWM_MOTOR 999
 //#define DIFERENCIAL_ATIVO TRAVA_ATIVO
 //
-////#define REG_TRACAO 500 // 700
+
 //#define REG_TRACAO 999 // 700
 //#define MIN_TRACAO 900
 //#define MAX_TRACAO 700
@@ -30,19 +30,13 @@
 
 //Processing
 #define LINENOW 0
-//#define WIDTH_TRACK 56
-//#define DELTA_AMOSTRA_MIN 47
-//#define MIN_ERRO 62
-//#define MAX_ERRO -MIN_ERRO
-//#define RANGE_ERRO (MAX_ERRO-MIN_ERRO)
+#define REFERENCE CENTCAMR
+#define MIN_ERRO 30
+#define MAX_ERRO -MIN_ERRO
+#define RANGE_ERRO (MAX_ERRO-MIN_ERRO)
 //#define TRAVA_ATIVO 22
 //#define MIN_DESTRAVA (WIDTH_TRACK-5)
 //#define MAX_DESTRAVA (WIDTH_TRACK+5)
-
-
-
-//PID
-//#define KP 1.5
 
 //Proporcional Servo
 

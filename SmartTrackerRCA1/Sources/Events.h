@@ -74,7 +74,6 @@
 #include "BitIoLdd8.h"
 #include "SW4.h"
 #include "BitIoLdd9.h"
-#include "WDog1.h"
 #include "Serial1.h"
 #include "ASerialLdd1.h"
 #include "Botao1.h"

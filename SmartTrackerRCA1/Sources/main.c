@@ -69,7 +69,6 @@
 #include "BitIoLdd8.h"
 #include "SW4.h"
 #include "BitIoLdd9.h"
-#include "WDog1.h"
 #include "Serial1.h"
 #include "ASerialLdd1.h"
 #include "Botao1.h"
@@ -84,10 +83,31 @@
 
 #include "dados.h"
 #include <stdlib.h>
+#include <extras/extras_stdlib.h>
+
+//Tracao
+//int REG_TRACAO = 450;
+int MAX_TRACAO = 1;
+#define MIN_TRACAO 800
+#define RANGE_TRACAO (MAX_TRACAO-MIN_TRACAO)
+
+//Controller
+int KP_st = 900;
+int KI_st = 0;
+int KD_st = 4500;
+
+int KP_tr = 900;
+int KI_tr = 0;
+int KD_tr = 4500;
+
+//Processing
+unsigned char WIDTH_TRACK = 64;
+unsigned char WIDTH_TRACK_RANGE = 10;
+unsigned char DELTA_AMOSTRA_MIN = 47; //47
 
 //Cam RCA
 uint8_t frameBuffer1[HEIGHT][WIDTH] = { };
-uint8_t frameLine[MAXCAM - MINCAM] = { };
+uint8_t frameLine[WIDTH_REAL] = { };
 char frameFlag;
 char saltoEmY;
 char indiceY;
@@ -98,25 +118,36 @@ unsigned char menorAmostra = 255;
 unsigned char auX;
 unsigned char deltaAmostra = 0;
 unsigned char limiar;
-//signed char auX_s, auY_s, bordaL, bordaR, ladoL, ladoR;
-//signed char diffBorda = 0;
-//unsigned char widthTrack = WIDTH_TRACK;
+signed char bordaL, bordaR, auX_s, auY_s;
+signed char diffBorda = 0;
+unsigned char isSignal = FALSE;
+signed char ladoL, ladoR;
+signed char signalFeedback = 0;
+signed char signalError = 0;
+signed char signalErrorOld = 0;
+signed char signalControl_st = 0;
+signed char signalControl_tr = 0;
+signed int sumError = 0;
+int servo;
+signed long motor1, motor2;
 //unsigned char quantLinhas = 2;
 //unsigned char quantLinhasPrevious = 2;
 //unsigned char ladoReal;
-//signed char output = 0;
 //signed char err = 0, errAbs = 0;
-//int servo, motor1, motor2;
 //char contTrack = 0;
 //signed char previousErr = 0, previousErrAbs = 0;
 //float Kp = 1.0;
 
 //debug
+unsigned char *signalUART;
+unsigned char ajusteUART;
+int v;
 //long contaQuadros = 0;
 
 void wait(long a) {
 	while (a > 0) {
 		a--;
+		//(void)WDog1_Clear(NULL);
 	}
 }
 
@@ -150,7 +181,7 @@ int acenderLeds(uint8 num) {
 	return 0;
 }
 
-void setTracao(int16 motor1, int16 motor2) {
+void setTracao(signed long motor1, int16 motor2) {
 	if (motor1 < MAX_PWM_MOTOR) motor1 = MAX_PWM_MOTOR;
 	if (motor1 > MIN_PWM_MOTOR) motor1 = MIN_PWM_MOTOR;
 	if (motor2 < MAX_PWM_MOTOR) motor2 = MAX_PWM_MOTOR;
@@ -176,6 +207,31 @@ int captaValueSwitch() {
 	return saida;
 }
 
+void enviaChar(char lt, long tm){
+	Serial1_SendChar(lt);
+	wait(tm);
+}
+
+void enviaString(char st[], long tm, char nl){
+	char *s;
+	s = st;
+	while(*s){
+		enviaChar(*s, tm);
+		s++;
+	}
+	if(nl){
+		enviaChar('\r',tm);
+		enviaChar('\n',tm);
+	}
+}
+
+void enviaVariavel(char strName[], int vari, long tm){
+	char confStr[15];
+	enviaString(strName, tm, FALSE);
+	itoa(vari, confStr, 10);
+	enviaString(confStr, tm, TRUE);
+}
+
 /*lint -save  -e970 Disable MISRA rule (6.3) checking. */
 int main(void)
 /*lint -restore Enable MISRA rule (6.3) checking. */
@@ -188,6 +244,12 @@ int main(void)
 
 	/* Write your code here */
 	/* For example: for(;;) { } */
+	//(void)WDog1_Init(NULL);
+	
+	//debug
+	signalUART = &signalError;
+	ajusteUART = 100;
+	
 	CamVSync_Disable();
 	CamHSync_Disable();
 	frameFlag = FALSE;
@@ -204,9 +266,160 @@ int main(void)
 	
 	//Kp = 0.5 + 2.5*((float) captaValueSwitch()/15);
 	
+	////////////BLUE INICIO ////////////
+	
 	while(!Botao1_GetVal()){
+		//(void)WDog1_Clear(NULL);
 	}
-	(void)WDog1_Init(NULL);
+	
+	long tm = 5000;//500
+	
+	enviaString("MODO CONFIGURAR (by Ailton)", tm, TRUE);
+	enviaString(" ", tm, TRUE);
+	
+	enviaVariavel("[01] REG_TRACAO ", MAX_TRACAO, tm);
+	enviaVariavel("(02) LINENOW ", LINENOW, tm);
+	enviaVariavel("[03] WIDTH_TRACK ", WIDTH_TRACK, tm);
+	enviaVariavel("[04] WIDTH_TRACK_RANGE ", WIDTH_TRACK_RANGE, tm);
+	enviaVariavel("[05] DELTA_AMOSTRA_MIN ", DELTA_AMOSTRA_MIN, tm);
+	enviaVariavel("(06) MIN_ERRO ", MIN_ERRO, tm);
+	enviaVariavel("(07) CENTRO_SERVO ", CENTRO_SERVO, tm);
+	enviaVariavel("(08) LIBERDADE_SERVO ", LIBERDADE_SERVO, tm);
+	enviaVariavel("[09] KP Servo ", KP_st, tm);
+	enviaVariavel("[10] KI Servo ", KI_st, tm);
+	enviaVariavel("[11] KD Servo ", KD_st, tm);
+	enviaString("[12] SinalUART = 01 deltaAmostra, 02 limiar, 03 bordaL, 04 bordaR, 05 diffBorda, 06 signalFeedback, 07 signalError, 08 signalControl_st, 09 signalControl_tr", tm, TRUE);
+	enviaString("(99) <- Iniciar!!!", tm, TRUE);
+	
+	enviaString(" ", tm, TRUE);
+	enviaString("Esperando comando ou acao de continuar...", tm, TRUE);
+	
+	unsigned char dataRcv = 0;
+	unsigned char dataCmd[15] = {"\0\0\0\0\0\0\0\0\0\0\0\0\0\0"};
+	unsigned char dataCmdIndex = 0;
+	while(TRUE){
+		
+		while(TRUE){
+			Serial1_RecvChar(&dataRcv);
+			if(dataRcv == 'Z') break;
+			//(void)WDog1_Clear(NULL);
+		}
+		dataCmdIndex = 0;
+		while(TRUE){
+			wait(5200); //410
+			Serial1_RecvChar(&dataRcv);
+			if(dataRcv == 'X') break;
+			dataCmd[dataCmdIndex] = dataRcv;
+			if(dataCmdIndex < 14) dataCmdIndex++;
+		}
+		dataCmd[dataCmdIndex] = '\0';
+		
+		char cmdZX[3] = {"00"};
+		char valorZX[11];
+		int ZXc, ZXv;
+		cmdZX[0] = dataCmd[0];
+		cmdZX[1] = dataCmd[1];
+		ZXc = atoi(cmdZX);
+		int cont;
+		for(cont = 3; dataCmd[cont]; cont++){
+			valorZX[cont-3] = dataCmd[cont];
+		}
+		valorZX[cont-3] = '\0';
+		ZXv = atoi(valorZX);
+		
+		int iniciar = FALSE;
+		switch (ZXc) {
+			case 99:
+				iniciar = TRUE;
+				break;
+			case 1:
+				MAX_TRACAO = ZXv;
+				enviaVariavel("MAX_TRACAO ", MAX_TRACAO, tm);
+				break;
+			case 3:
+				WIDTH_TRACK = ZXv;
+				enviaVariavel("WIDTH_TRACK ", WIDTH_TRACK, tm);
+				break;
+			case 4:
+				WIDTH_TRACK_RANGE = ZXv;
+				enviaVariavel("WIDTH_TRACK_RANGE ", WIDTH_TRACK_RANGE, tm);
+				break;
+			case 5:
+				DELTA_AMOSTRA_MIN = ZXv;
+				enviaVariavel("DELTA_AMOSTRA_MIN ", DELTA_AMOSTRA_MIN, tm);
+				break;
+			case 9:
+				KP_st = ZXv;
+				enviaVariavel("KP Servo", KP_st, tm);
+				break;
+			case 10:
+				KI_st = ZXv;
+				enviaVariavel("KI Servo", KI_st, tm);
+				break;
+			case 11:
+				KD_st = ZXv;
+				enviaVariavel("KD Servo", KD_st, tm);
+				break;
+			case 12:
+				//01 deltaAmostra, 02 limiar, 03 bordaL, 04 bordaR, 05 diffBorda, 06 signalFeedback, 07 signalError, 08 signalControl
+				// 06 signalFeedback, 07 signalError, 08 signalControl_st, 09 signalControl_tr
+				v= ZXv;
+				if(v == 1) {
+					signalUART = &deltaAmostra;
+					ajusteUART = 0;
+					enviaString("Usando deltaAmostra", tm, TRUE);
+				}
+				else if(v == 2) {
+					signalUART = &limiar;
+					ajusteUART = 0;
+					enviaString("Usando Limiar", tm, TRUE);
+				}
+				else if(v == 3){ 
+					signalUART = &bordaL;
+					ajusteUART = 128;
+					enviaString("Usando bordaL", tm, TRUE);
+				}
+				else if(v == 4){
+					signalUART = &bordaR;
+					ajusteUART = 128;
+					enviaString("Usando bordaR", tm, TRUE);
+				}
+				else if(v == 5){
+					signalUART = &diffBorda;
+					ajusteUART = 0;
+					enviaString("Usando diffBorda", tm, TRUE);
+				}
+				else if(v == 6){
+					signalUART = &signalFeedback;
+					ajusteUART = 100;
+					enviaString("Usando SignalFeedback", tm, TRUE);
+				}
+				else if(v == 7){
+					signalUART = &signalError;
+					ajusteUART = 100;
+					enviaString("Usando SignalError", tm, TRUE);
+				}
+				else if(v == 8){
+					ajusteUART = 100;
+					signalUART = &signalControl_st;
+					enviaString("Usando signalControl Servo", tm, TRUE);
+				}
+				else if(v == 9){
+					ajusteUART = 100;
+					signalUART = &signalControl_tr;
+					enviaString("Usando signalControl Tracao", tm, TRUE);
+				}
+				else enviaString("Valor não existe!", tm, TRUE);
+				break;
+		}
+		
+		if(iniciar) break;
+		
+		//(void)WDog1_Clear(NULL);
+	}
+	
+	
+	////////////BLUE FIM ////////////
 	
 	for (;;) {
 		//Linha 6 capturada!
@@ -222,25 +435,90 @@ int main(void)
 			for (auX = MINCAM; auX < MAXCAM; auX++) {
 				frameLine[auX - MINCAM] = frameBuffer1[LINENOW][auX] > limiar;
 			}
-//			
-//			bordaL = -1;
-//			bordaR = -1;
-//			if(deltaAmostra > DELTA_AMOSTRA_MIN){
-//				for (auX_s = CENTCAML; auX_s > 0; auX_s--) {
-//					if (frameLine[auX_s] != frameLine[auX_s-1]) {
-//						bordaL = auX_s;
-//						break;
-//					}
-//				}
-//				for (auY_s = CENTCAML; auY_s < (WIDTH_REAL-1); auY_s++) {
-//					if (frameLine[auY_s] != frameLine[auY_s+1]) {
-//						bordaR = auY_s;
-//						break;
-//					}
-//				}
-//			}
-//			
-//			diffBorda = 0;
+			
+			bordaL = -1;
+			bordaR = -1;
+			for (auX_s = CENTCAML; auX_s >= 0; auX_s--) {
+				if (!frameLine[auX_s]) {
+					bordaL = auX_s;
+					break;
+				}
+			}
+			for (auY_s = CENTCAMR; auY_s < WIDTH_REAL; auY_s++) {
+				if (!frameLine[auY_s]) {
+					bordaR = auY_s;
+					break;
+				}
+			}
+			
+			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     BEGIN
+			char leds = abs((CENTCAML - auX_s) - (auY_s - CENTCAMR));
+			if (leds == 0) acenderLeds(0b1111);
+			else if (leds == 1) acenderLeds(0b1110);
+			else if (leds == 2)	acenderLeds(0b1100);
+			else if (leds == 3) acenderLeds(0b1000);
+			else acenderLeds(0);
+			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     END
+			
+			diffBorda = 0;
+			isSignal = FALSE;
+			if(deltaAmostra > DELTA_AMOSTRA_MIN){
+				if((bordaL != -1) && (bordaR != -1)){
+					//Tenta achar duas linhas
+					diffBorda = bordaR - bordaL;
+					if((diffBorda > (WIDTH_TRACK-WIDTH_TRACK_RANGE)) && (diffBorda < (WIDTH_TRACK+WIDTH_TRACK_RANGE))){
+						isSignal = TRUE;
+					}
+				}
+				else if((bordaL != -1) || (bordaR != -1)){
+					//Tenta achar uma linha
+					isSignal = TRUE;
+				}
+			}
+			
+			if(isSignal){
+				if (bordaL == -1) {
+					ladoL = bordaR - WIDTH_TRACK;
+					ladoR = bordaR;
+				} else if (bordaR == -1) {
+					ladoL = bordaL;
+					ladoR = bordaL + WIDTH_TRACK;
+				} else {
+					ladoR = bordaR;
+					ladoL = bordaL;
+				}
+				signalFeedback = (ladoR + ladoL) / 2;
+				signalError = REFERENCE - signalFeedback;
+			}
+			else {
+				signed char signalErrorAbs = abs(signalError);
+				if(signalErrorAbs > 25) signalError = (signalError/signalErrorAbs)*MIN_ERRO;
+			}
+			
+			if(abs(sumError) < 16000) sumError += signalError;
+			
+			if(abs(signalError) > 15) KP_tr = 3 * 900;
+			else KP_tr = 0.8 * 900;
+			
+			
+			signalControl_st = (((float) KP_st/1000)*signalError) + (((float) KI_st/1000)*sumError) + (((float) KD_st/1000)*(signalError-signalErrorOld));
+			signalControl_tr = (((float) KP_tr/1000)*signalError) + (((float) KD_tr/1000)*(signalError-signalErrorOld));
+	
+			servo = ESQUERDA_SERVO	+ (DIREITO_SERVO - ESQUERDA_SERVO)*((float)(signalControl_st - MIN_ERRO)/RANGE_ERRO);
+			setServo(servo);
+			
+//			motor1 = MAX_TRACAO;
+//			motor2 = MAX_TRACAO;
+			
+		    motor2 = MAX_TRACAO + (MIN_TRACAO-MAX_TRACAO)*((float) (signalControl_tr)/(MAX_ERRO));
+		    motor1 = MIN_TRACAO + (MAX_TRACAO-MIN_TRACAO)*((float) (signalControl_tr-MIN_ERRO)/(-MIN_ERRO));
+			
+			setTracao(motor1, motor2);
+			
+			Serial1_SendChar(((unsigned char) *signalUART)+ajusteUART);
+			
+			signalErrorOld = signalError;
+			
 //			if(bordaL != -1 && bordaR != -1) diffBorda = bordaR - bordaL;
 //			if(diffBorda && (diffBorda < WIDTH_TRACK/2)) bordaR = -1;
 //			
@@ -258,14 +536,7 @@ int main(void)
 //				}
 //			}
 //			
-//			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     BEGIN
-//			char leds = abs((CENTCAML - auX_s) - (auY_s - CENTCAMR));
-//			if (leds == 0) acenderLeds(0b1111);
-//			else if (leds == 1) acenderLeds(0b1110);
-//			else if (leds == 2)	acenderLeds(0b1100);
-//			else if (leds == 3) acenderLeds(0b1000);
-//			else acenderLeds(0);
-//			// FOR DEBUG - FIND THE CENTER OF DE CAR AND CAMERA     END
+
 //			
 //			//FOR DEBUG - HAS TWO LINES BEGIN
 //			if(bordaL == 0 || bordaR == WIDTH_REAL) acenderLeds(0b0000);
@@ -334,12 +605,9 @@ int main(void)
 //			
 //			
 //			
-//			servo = ESQUERDA_SERVO	+ (DIREITO_SERVO - ESQUERDA_SERVO)*((float)(err - MIN_ERRO)/RANGE_ERRO);
-//			setServo(servo);
+
 //			
-//			motor1 = REG_TRACAO;
-//			motor2 = REG_TRACAO;
-//			setTracao(motor1, motor2);
+
 //			
 //			//Serial1_SendChar(err+128);
 //	
@@ -392,7 +660,7 @@ int main(void)
 		if (frameFlag) {
 			frameFlag = FALSE;
 			indiceY = 0;
-			(void)WDog1_Clear(NULL);
+			//(void)WDog1_Clear(NULL);
 			//Serial1_SendChar('\n');
 			CamVSync_Enable();
 		}
