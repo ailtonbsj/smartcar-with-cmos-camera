@@ -1,11 +1,11 @@
 /* ###################################################################
 **     Filename    : Events.h
-**     Project     : ProcessorExpert
+**     Project     : NTSCWithDMA
 **     Processor   : MKL25Z128VLK4
 **     Component   : Events
 **     Version     : Driver 01.00
 **     Compiler    : GNU C Compiler
-**     Date/Time   : 2015-04-12, 17:37, # CodeGen: 0
+**     Date/Time   : 2015-06-01, 16:20, # CodeGen: 0
 **     Abstract    :
 **         This is user's event module.
 **         Put your event handler code here.
@@ -34,7 +34,13 @@
 #include "PE_Error.h"
 #include "PE_Const.h"
 #include "IO_Map.h"
-#include "CamAnalog.h"
+#include "CamDMA.h"
+#include "DMA1.h"
+#include "CamADC.h"
+#include "CamHSync.h"
+#include "ExtIntLdd1.h"
+#include "CamVSync.h"
+#include "ExtIntLdd2.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,16 +51,78 @@ extern "C" {
 **     Event       :  Cpu_OnNMIINT (module Events)
 **
 **     Component   :  Cpu [MKL25Z128LK4]
-**     Description :
+*/
+/*!
+**     @brief
 **         This event is called when the Non maskable interrupt had
-**         occurred. This event is automatically enabled when the <NMI
-**         interrupt> property is set to 'Enabled'.
+**         occurred. This event is automatically enabled when the [NMI
+**         interrupt] property is set to 'Enabled'.
+*/
+/* ===================================================================*/
+void Cpu_OnNMIINT(void);
+
+
+void CameraHSync_OnInterrupt(void);
+/*
+** ===================================================================
+**     Event       :  CameraHSync_OnInterrupt (module Events)
+**
+**     Component   :  CameraHSync [ExtInt]
+**     Description :
+**         This event is called when an active signal edge/level has
+**         occurred.
 **     Parameters  : None
 **     Returns     : Nothing
 ** ===================================================================
 */
-void Cpu_OnNMIINT(void);
 
+/*
+** ===================================================================
+**     Event       :  CamDMA_OnComplete (module Events)
+**
+**     Component   :  CamDMA [DMAChannel_LDD]
+*/
+/*!
+**     @brief
+**         Called at the end of a DMA transfer. If the Half complete
+**         property in initialization section is enabled, this event is
+**         also called when current major iteration count reaches the
+**         halfway point. See SetEventMask() and GetEventMask() methods.
+**     @param
+**         UserDataPtr     - Pointer to the user or
+**                           RTOS specific data. This pointer is passed
+**                           as the parameter of Init method.
+*/
+/* ===================================================================*/
+void CamDMA_OnComplete(LDD_TUserData *UserDataPtr);
+
+void CamHSync_OnInterrupt(void);
+/*
+** ===================================================================
+**     Event       :  CamHSync_OnInterrupt (module Events)
+**
+**     Component   :  CamHSync [ExtInt]
+**     Description :
+**         This event is called when an active signal edge/level has
+**         occurred.
+**     Parameters  : None
+**     Returns     : Nothing
+** ===================================================================
+*/
+
+void CamVSync_OnInterrupt(void);
+/*
+** ===================================================================
+**     Event       :  CamVSync_OnInterrupt (module Events)
+**
+**     Component   :  CamVSync [ExtInt]
+**     Description :
+**         This event is called when an active signal edge/level has
+**         occurred.
+**     Parameters  : None
+**     Returns     : Nothing
+** ===================================================================
+*/
 
 /* END Events */
 
@@ -70,7 +138,7 @@ void Cpu_OnNMIINT(void);
 /*
 ** ###################################################################
 **
-**     This file was created by Processor Expert 10.2 [05.06]
+**     This file was created by Processor Expert 10.3 [05.09]
 **     for the Freescale Kinetis series of microcontrollers.
 **
 ** ###################################################################
