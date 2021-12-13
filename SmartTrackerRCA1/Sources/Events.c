@@ -138,16 +138,23 @@ void Relogio1_OnInterrupt(void)
 {
   /* Write your code here ... */
 	contMeioSeg++;
-	if(contMeioSeg == 2){
-		RETA_MAX = 1;
-		RETA_MIN = 800;
-		CURVA_MAX = 350;
-		CURVA_MIN = 900;
-		FREIO_MAX = 800;
-		FREIO_MIN = 999;
+	if(contMeioSeg == TIME_IMPULSOINICIAL){
+//		RETA_MAX = 998;//1
+//		RETA_MIN = 999;//800
+//		CURVA_MAX = 998;//350
+//		CURVA_MIN = 999;//900
+//		FREIO_MAX = 998;//800
+//		FREIO_MIN = 999;//999
+		
+		RETA_MAX = 1;//1
+		RETA_MIN = 100;//800
+		CURVA_MAX = 250;//350
+		CURVA_MIN = 800;//900
+		FREIO_MAX = 800;//800
+		FREIO_MIN = 999;//999
 	}
-	else if(contMeioSeg == 28){
-		ativaParada = TRUE; //28 equals to 14 secs
+	else if(contMeioSeg == TIME_PARADA){
+		if(SW4_GetVal()) ativaParada = TRUE;
 		Relogio1_Disable();
 	}
 }

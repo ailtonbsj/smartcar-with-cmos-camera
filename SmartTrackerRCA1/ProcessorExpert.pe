@@ -2,9 +2,9 @@
 <PEproject>
   <Header>
     <Name>SmartTrackerRCA4</Name>
-    <SavedBy>Windows</SavedBy>
+    <SavedBy>WindowsEight</SavedBy>
     <ModificationStamp>39</ModificationStamp>
-    <Date>2015-08-13</Date>
+    <Date>2015-09-05</Date>
     <IDE>Eclipse IDE</IDE>
     <PEversion>1.9.0.RT6_b1411-0406</PEversion>
   </Header>
@@ -6928,7 +6928,7 @@
         <ReadOnly>false</ReadOnly>
         <UserReadOnly>false</UserReadOnly>
         <PropertyModelIsAutomatic>false</PropertyModelIsAutomatic>
-        <Value>0</Value>
+        <Value>1</Value>
         <Base>DEC</Base>
       </ItemState>
       <ItemState>

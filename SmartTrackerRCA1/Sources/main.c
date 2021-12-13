@@ -121,14 +121,9 @@ char contaFreio = 0;
 char isBoost = 0;
 char isFreio = 0;
 
-//Processing
-unsigned char WIDTH_TRACK = 64;
-unsigned char WIDTH_TRACK_RANGE = 10;
-unsigned char DELTA_AMOSTRA_MIN = 47; //47
-
 //Tracao
-int MAX_TRACAO = 1;//1
-int MIN_TRACAO = 900;//900
+int maxTracao = 1;//1
+int minTracao = 900;//900
 
 unsigned int RETA_MAX = 1;
 unsigned int RETA_MIN = 600;
@@ -149,10 +144,10 @@ void setServo(int16 giro) {
 }
 
 void setTracao(signed long motor1, int16 motor2) {
-	if (motor1 < MAX_PWM_MOTOR) motor1 = MAX_PWM_MOTOR;
-	if (motor1 > MIN_PWM_MOTOR) motor1 = MIN_PWM_MOTOR;
-	if (motor2 < MAX_PWM_MOTOR) motor2 = MAX_PWM_MOTOR;
-	if (motor2 > MIN_PWM_MOTOR)	motor2 = MIN_PWM_MOTOR;
+	if (motor1 < 1) motor1 = 1;
+	else if (motor1 > 999) motor1 = 999;
+	if (motor2 < 1) motor2 = 1;
+	else if (motor2 > 999)	motor2 = 999;
 	TracaoA1_SetDutyUS(motor1);
 	TracaoB1_SetDutyUS(motor2);
 }
@@ -212,10 +207,9 @@ int main(void)
 	TracaoB1_SetDutyUS(999);
 	Relogio1_Enable();
 	
-	
 	for(;;){
 		//Processa Linha ja capturada!
-		if( (indiceY > thrY) && (thrY <= LINEBOOST) ){
+		if( (thrY < indiceY) && (thrY <= LINEBOOST) ){
 			//Binariza linha
 			maiorAmostra = 0;
 			menorAmostra = 255;
@@ -225,8 +219,8 @@ int main(void)
 			}
 			deltaAmostra = maiorAmostra - menorAmostra;
 			
-			if(deltaAmostra > 40) limiar = ((float) deltaAmostra / 2) + menorAmostra + 3;
-			else limiar = 85;
+			if(deltaAmostra > DELTAAMOSTRA_MIN) limiar = ((float) deltaAmostra / 2) + menorAmostra + 3;
+			else limiar = LIMIAR_PADRAO;
 			
 			for (auX = MINCAM; auX < MAXCAM; auX++) {
 				frameLine[thrY][auX - MINCAM] = frameBuffer1[thrY][auX] > limiar;
@@ -281,7 +275,7 @@ int main(void)
 					signalErrorAbs = abs(signalError);
 				}
 				else {
-					//if(signalErrorAbs > 25) signalError = 2*(signalError/signalErrorAbs)*MIN_ERRO;
+					if(signalErrorAbs > SATURARERROIN) signalError = 2*(signalError/signalErrorAbs)*MIN_ERRO;
 				}
 				
 				#define KpMinTracao 1
@@ -295,8 +289,8 @@ int main(void)
 				servo = ESQUERDA_SERVO	+ (DIREITO_SERVO - ESQUERDA_SERVO)*((float)(signalControlServo - MIN_ERRO)/RANGE_ERRO);
 				setServo(servo);
 				
-				motor2 = MAX_TRACAO + (MIN_TRACAO-MAX_TRACAO)*((float) (signalControlTracao)/(MAX_ERRO));
-				motor1 = MIN_TRACAO + (MAX_TRACAO-MIN_TRACAO)*((float) (signalControlTracao-MIN_ERRO)/(-MIN_ERRO));
+				motor2 = maxTracao + (minTracao-maxTracao)*((float) (signalControlTracao)/(MAX_ERRO));
+				motor1 = minTracao + (maxTracao-minTracao)*((float) (signalControlTracao-MIN_ERRO)/(-MIN_ERRO));
 				
 				setTracao(motor1, motor2);
 			}
@@ -322,12 +316,12 @@ int main(void)
 				diffBorda = 0;
 				if(deltaAmostra > DELTA_AMOSTRA_MIN){
 					if((bordaL != -1) && (bordaR != -1)){
-					//Tenta achar duas linhas
-					diffBorda = bordaR - bordaL;
-					if(diffBorda > 16) typeTrack = RETA; //19
+						//Tenta achar duas linhas
+						diffBorda = bordaR - bordaL;
+						if(diffBorda > WIDTH_BOOST_TRACK) typeTrack = RETA;
 						else typeTrack = CURVA;
 					}
-					else if((bordaL == -1) && (bordaR == -1)) typeTrack = RETA;
+					else if((bordaL == -1) && (bordaR == -1) && (typeTrack == RETA)) typeTrack = RETA;
 					else typeTrack = CURVA;
 				}
 				else typeTrack = CURVA;
@@ -335,23 +329,23 @@ int main(void)
 				if(typeTrack){
 					//RETA
 					contRetas++;
-					if(contRetas > 20){
+					if(contRetas > NUMBER_RETAS){
 						acenderLeds(0b1111);
-						MAX_TRACAO = RETA_MAX;
-						MIN_TRACAO = RETA_MIN;
+						maxTracao = RETA_MAX;
+						minTracao = RETA_MIN;
 						isBoost = TRUE;
 						contaCurvas = 0;
 						contaFreio = 0;
-						contRetas = 21;
+						contRetas = NUMBER_RETAS+1;
 					}
 				}
 				else {
 					//CURVA
 					if(isBoost){
 						contaCurvas++;
-						if(contaCurvas > 20){
-							MAX_TRACAO = FREIO_MAX;
-							MIN_TRACAO = FREIO_MIN;
+						if(contaCurvas > NUMBER_CURVAS){
+							maxTracao = FREIO_MAX;
+							minTracao = FREIO_MIN;
 							isBoost = FALSE;
 							isFreio = TRUE;
 							contRetas = 0;
@@ -362,11 +356,11 @@ int main(void)
 					else {
 						if(isFreio){
 							contaFreio++;
-							if(contaFreio > 16) isFreio = FALSE; //Controla o tempo do Freio
+							if(contaFreio > CICLOS_FREIO) isFreio = FALSE; //Controla o tempo do Freio
 						}
 						else {
-							MAX_TRACAO = CURVA_MAX;
-							MIN_TRACAO = CURVA_MIN;
+							maxTracao = CURVA_MAX;
+							minTracao = CURVA_MIN;
 						}
 					}
 				}
@@ -391,7 +385,7 @@ int main(void)
 					}
 				}
 				
-				if( (padFinded < 11) || (padFinded > 25) || (signalErrorAbs > 6) ) padFinded = 0;
+				if( (padFinded < 11) || (padFinded > 25) || (signalErrorAbs > RANGEATIVOERRO) ) padFinded = 0;
 				
 				if( (padFinded > 19) && ativaParada ){
 					//STOP CAR

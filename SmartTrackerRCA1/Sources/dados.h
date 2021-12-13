@@ -1,3 +1,4 @@
+/*** Nao mudar esse código aqui ***/
 
 //Camera RCA
 #define WIDTH 85
@@ -8,45 +9,67 @@
 #define CENTCAML (WIDTH_REAL/2)
 #define CENTCAMR (CENTCAML+1)
 
-//Boost
-#define WIDTH_BOOST 36
-#define LIMBOOSTL (CENTCAMR - (WIDTH_BOOST/2))
-#define LIMBOOSTR (CENTCAML + (WIDTH_BOOST/2))
-
 //Servo
 #define CENTRO_SERVO 18518 //FUTABA 18518                 TOWERPRO 18400
 #define LIBERDADE_SERVO 320  // FUTABA 320                TOWERPRO 220
 #define ESQUERDA_SERVO (CENTRO_SERVO-LIBERDADE_SERVO)
 #define DIREITO_SERVO (CENTRO_SERVO+LIBERDADE_SERVO)
 
-//Tracao
-#define MAX_PWM_MOTOR 1
-#define MIN_PWM_MOTOR 999
 
-//#define DIFERENCIAL_ATIVO TRAVA_ATIVO
-//
 
-//#define REG_TRACAO 999 // 700
-//#define MIN_TRACAO 900
-//#define MAX_TRACAO 700
 
-//#define REG_TRACAO 999//800
-//#define MIN_TRACAO 999//900
-//#define MAX_TRACAO 999//500
 
-//Processing
+
+
+
+/*** Mudar apartir daqui ***/
+
+//Algoritmo de Limiarização
+#define DELTAAMOSTRA_MIN 40
+#define DELTA_AMOSTRA_MIN 47
+#define LIMIAR_PADRAO 85
+
+//linhas de processamento
 #define LINENOW 0
-#define REFERENCE CENTCAMR
-#define MIN_ERRO 30
+#define LINEBOOST 26
+
+//Algoritmo de Deteccao de Bordas
+#define WIDTH_TRACK 64//64
+#define WIDTH_TRACK_RANGE 10
+
+//Sistema de Controle
+#define MIN_ERRO 29
+#define SATURARERROIN 30
+
+//Boost
+#define WIDTH_BOOST 36
+#define WIDTH_BOOST_TRACK 16 //19
+#define NUMBER_RETAS 10//20
+#define NUMBER_CURVAS 10//20
+#define CICLOS_FREIO 16 // 60 ciclos equals to 1 sec
+
+
+//Timers
+#define TIME_PARADA 28 //28 equals to 14 secs
+#define TIME_IMPULSOINICIAL 2 //2 equals to 1 sec
+
+//Parada
+#define RANGEATIVOERRO 6
+
+
+
+
+
+
+
+
+/*** Nao mudar esse código aqui ***/
+
+//Sistema de Controle
+#define REFERENCE CENTCAML
 #define MAX_ERRO -MIN_ERRO
 #define RANGE_ERRO (MAX_ERRO-MIN_ERRO)
 
-#define LINEBOOST 26
-//#define TRAVA_ATIVO 22
-//#define MIN_DESTRAVA (WIDTH_TRACK-5)
-//#define MAX_DESTRAVA (WIDTH_TRACK+5)
-
-//Proporcional Servo
-
-//#define RANGE_SERVO (DIREITO_SERVO-ESQUERDA_SERVO)
-
+//Boost
+#define LIMBOOSTL (CENTCAMR - (WIDTH_BOOST/2))
+#define LIMBOOSTR (CENTCAML + (WIDTH_BOOST/2))
