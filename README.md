@@ -14,7 +14,15 @@ Source code using OV5116 CMOS monochrome camera from Freescale Cup Brazil 2015.
 - Delphi 7
 - ComPort Library version 3.0
 
-### Screenshots
+## Others repositories
+
+- [Freescale Cup Brazil 2014 (uranium-team)](https://github.com/ailtonbsj/uranium-team)
+
+- [Freescale Cup Brazil 2013 (cedronics-team)](https://github.com/ailtonbsj/cedronics-team)
+
+- [Processor Expert Samples](https://github.com/ailtonbsj/processor-expert-samples)
+
+## Screenshots
 
 Version 3
 ![](.github/v31.gif)
